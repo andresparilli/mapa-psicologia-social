@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa Multimedia Integrador — Psicología Social v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --purple: #6c5ce7;
+  --purple-light: #a29bfe;
+  --purple-bg: #f3f0ff;
+  --blue: #0984e3;
+  --blue-light: #74b9ff;
+  --blue-bg: #eef6ff;
+  --red: #d63031;
+  --red-light: #ff7675;
+  --red-bg: #fff0f0;
+  --green: #00b894;
+  --green-light: #55efc4;
+  --green-bg: #edfff9;
+  --text: #2d3436;
+  --text-light: #636e72;
+  --bg: #fafafa;
+  --white: #ffffff;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+  --card-bg: #ffffff;
+  --nav-bg: rgba(255,255,255,0.95);
+  --border-light: rgba(0,0,0,0.06);
+  --diagram-bg: white;
+  --ref-border: #2d3436;
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --text: #dfe6e9;
+  --text-light: #b2bec3;
+  --bg: #1a1a2e;
+  --white: #16213e;
+  --card-bg: #1e2a47;
+  --nav-bg: rgba(22,33,62,0.95);
+  --border-light: rgba(255,255,255,0.08);
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 30px rgba(0,0,0,0.4);
+  --purple-bg: rgba(108,92,231,0.15);
+  --blue-bg: rgba(9,132,227,0.15);
+  --red-bg: rgba(214,48,49,0.15);
+  --green-bg: rgba(0,184,148,0.15);
+  --diagram-bg: #1e2a47;
+  --ref-border: #dfe6e9;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  transition: background 0.4s, color 0.4s;
+}
+
+/* ===== COVER ===== */
+.cover {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2d1b69 0%, #6c5ce7 50%, #0984e3 100%);
+  color: white;
+  text-align: center;
+  padding: 3rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.cover::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.05) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(255,255,255,0.03) 0%, transparent 50%);
+  animation: coverFloat 20s ease-in-out infinite;
+}
+@keyframes coverFloat {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(-2%, 2%); }
+}
+.cover > * { position: relative; z-index: 1; }
+.cover-university { font-size: 1rem; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 0.5rem; font-weight: 500; }
+.cover-faculty { font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; opacity: 0.6; margin-bottom: 3rem; }
+.cover h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; max-width: 700px; }
+.cover-subtitle { font-size: 1.15rem; font-weight: 300; opacity: 0.85; margin-bottom: 3rem; max-width: 500px; }
+.cover-meta { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.95rem; opacity: 0.9; margin-bottom: 3rem; }
+.cover-meta span { font-weight: 300; }
+.cover-meta strong { font-weight: 600; }
+.cover-scroll {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 2rem; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 50px;
+  color: white; text-decoration: none; font-weight: 500; font-size: 0.9rem;
+  transition: all 0.3s; cursor: pointer;
+}
+.cover-scroll:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+.cover-layers { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; justify-content: center; }
+.cover-layer-badge { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.3); }
+
+/* ===== NAVIGATION ===== */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--nav-bg); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.4s;
+}
+.nav-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; gap: 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav-inner::-webkit-scrollbar { display: none; }
+.nav a, .nav button {
+  padding: 1rem 1.25rem; text-decoration: none;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; white-space: nowrap;
+  transition: all 0.2s; border-bottom: 3px solid transparent;
+  background: none; border-top: none; border-left: none; border-right: none;
+  cursor: pointer; font-family: inherit;
+}
+.nav a:hover, .nav button:hover { background: rgba(128,128,128,0.08); }
+.nav a[data-layer="1"], .nav button[data-layer="1"] { color: var(--purple); }
+.nav a[data-layer="1"].active { border-bottom-color: var(--purple); }
+.nav a[data-layer="2"], .nav button[data-layer="2"] { color: var(--blue); }
+.nav a[data-layer="2"].active { border-bottom-color: var(--blue); }
+.nav a[data-layer="3"], .nav button[data-layer="3"] { color: var(--red); }
+.nav a[data-layer="3"].active { border-bottom-color: var(--red); }
+.nav a[data-layer="4"], .nav button[data-layer="4"] { color: var(--green); }
+.nav a[data-layer="4"].active { border-bottom-color: var(--green); }
+.nav a[data-layer="refs"] { color: var(--text-light); }
+.nav-actions { display: flex; align-items: center; gap: 0.25rem; margin-left: auto; padding-right: 0.5rem; }
+.nav-btn {
+  padding: 0.5rem 0.75rem; border-radius: 8px;
+  background: rgba(128,128,128,0.1); border: none; cursor: pointer;
+  font-size: 0.85rem; transition: all 0.2s; color: var(--text);
+  font-family: inherit;
+}
+.nav-btn:hover { background: rgba(128,128,128,0.2); }
+
+/* ===== SEARCH BAR ===== */
+.search-bar {
+  max-width: 1200px; margin: 0 auto; padding: 1rem 1.5rem 0;
+}
+.search-input {
+  width: 100%; padding: 0.75rem 1.25rem 0.75rem 2.75rem;
+  border: 2px solid var(--border-light); border-radius: 12px;
+  font-size: 0.95rem; font-family: inherit;
+  background: var(--card-bg); color: var(--text);
+  transition: all 0.3s; outline: none;
+}
+.search-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(108,92,231,0.15); }
+.search-wrap { position: relative; }
+.search-icon {
+  position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+  font-size: 1rem; opacity: 0.4;
+}
+
+/* ===== NETWORK VIZ ===== */
+.network-section {
+  max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 1rem;
+}
+.network-section h2 { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 0.5rem; }
+.network-section > p { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.network-container {
+  width: 100%; background: var(--card-bg); border-radius: 16px;
+  box-shadow: var(--shadow); overflow: hidden; position: relative;
+  transition: background 0.4s;
+}
+#networkCanvas { width: 100%; display: block; }
+.network-tooltip {
+  position: absolute; padding: 0.5rem 0.85rem; border-radius: 8px;
+  background: rgba(45,52,54,0.92); color: white; font-size: 0.78rem;
+  pointer-events: none; opacity: 0; transition: opacity 0.15s;
+  max-width: 220px; line-height: 1.4; z-index: 10;
+  backdrop-filter: blur(8px);
+}
+.network-legend {
+  display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+  padding: 0.75rem 1rem; border-top: 1px solid var(--border-light);
+  font-size: 0.75rem; color: var(--text-light);
+}
+.network-legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.network-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Mobile: simplified list */
+.network-mobile-list { display: none; }
+@media (max-width: 768px) {
+  .network-container svg { display: none; }
+  .network-mobile-list {
+    display: block; padding: 1rem;
+    columns: 2; column-gap: 0.75rem;
+  }
+  .network-mobile-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.6rem; margin-bottom: 0.4rem;
+    border-radius: 8px; cursor: pointer; font-size: 0.8rem;
+    break-inside: avoid; transition: background 0.2s;
+    background: rgba(128,128,128,0.05);
+  }
+  .network-mobile-item:hover { background: rgba(128,128,128,0.12); }
+  .network-mobile-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+}
+
+/* ===== LAYER SECTIONS ===== */
+.layer-section { padding: 4rem 1.5rem 2rem; transition: background 0.4s; }
+.layer-inner { max-width: 1200px; margin: 0 auto; }
+.layer-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.layer-number {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.3rem; color: white; flex-shrink: 0;
+}
+.layer-header h2 { font-size: 1.5rem; font-weight: 700; }
+.layer-header .layer-desc { font-size: 0.85rem; color: var(--text-light); font-weight: 400; }
+
+/* ===== NODE CARDS ===== */
+.nodes-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem;
+}
+.node-card {
+  background: var(--card-bg); border-radius: 14px;
+  box-shadow: var(--shadow); overflow: hidden;
+  transition: all 0.3s; cursor: pointer;
+  border-left: 4px solid transparent;
+}
+.node-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.node-card.layer-1 { border-left-color: var(--purple); }
+.node-card.layer-2 { border-left-color: var(--blue); }
+.node-card.layer-3 { border-left-color: var(--red); }
+.node-card.layer-4 { border-left-color: var(--green); }
+.node-card.searched-out { opacity: 0.15; transform: scale(0.97); pointer-events: none; }
+.node-card.highlight-pulse {
+  animation: cardPulse 1.5s ease-in-out;
+}
+@keyframes cardPulse {
+  0% { box-shadow: 0 0 0 0 rgba(108,92,231,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(108,92,231,0); }
+  100% { box-shadow: var(--shadow); }
+}
+
+.node-header {
+  padding: 1.25rem 1.25rem 0.75rem;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+}
+.node-num {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.75rem; color: white; flex-shrink: 0;
+}
+.layer-1 .node-num { background: var(--purple); }
+.layer-2 .node-num { background: var(--blue); }
+.layer-3 .node-num { background: var(--red); }
+.layer-4 .node-num { background: var(--green); }
+.node-title { flex: 1; font-weight: 700; font-size: 1rem; line-height: 1.3; }
+.node-toggle {
+  width: 24px; height: 24px; border-radius: 50%; background: rgba(128,128,128,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: var(--text-light); flex-shrink: 0;
+  transition: transform 0.3s;
+}
+.node-card.expanded .node-toggle { transform: rotate(180deg); }
+.node-brief { padding: 0 1.25rem; font-size: 0.85rem; color: var(--text-light); line-height: 1.5; }
+.node-citation { padding: 0.5rem 1.25rem 1rem; font-size: 0.75rem; color: #b2bec3; font-style: italic; }
+
+.node-detail { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+.node-card.expanded .node-detail { max-height: 1200px; }
+.node-detail-inner {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid var(--border-light);
+  margin-top: 0.5rem; padding-top: 1rem;
+}
+.node-detail-inner p { font-size: 0.85rem; line-height: 1.7; margin-bottom: 0.75rem; }
+.node-detail-inner strong { font-weight: 600; }
+.node-links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.node-link-tag {
+  font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 20px;
+  background: rgba(128,128,128,0.1); color: var(--text-light);
+  text-decoration: none; transition: all 0.2s; cursor: pointer;
+}
+.node-link-tag:hover { background: rgba(128,128,128,0.2); color: var(--text); }
+.node-verb {
+  display: inline-block; font-size: 0.7rem; padding: 0.2rem 0.5rem;
+  border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;
+}
+.layer-1 .node-verb { background: var(--purple-bg); color: var(--purple); }
+.layer-2 .node-verb { background: var(--blue-bg); color: var(--blue); }
+.layer-3 .node-verb { background: var(--red-bg); color: var(--red); }
+.layer-4 .node-verb { background: var(--green-bg); color: var(--green); }
+
+/* Explored badge */
+.node-explored-badge {
+  display: none; font-size: 0.65rem; padding: 0.15rem 0.5rem;
+  border-radius: 10px; background: var(--green-bg); color: var(--green);
+  font-weight: 600; margin-left: 0.5rem;
+}
+.node-card.explored .node-explored-badge { display: inline-block; }
+
+/* ===== AUDIO PLAYER ===== */
+.audio-player-custom {
+  margin: 0.75rem 0; padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(9,132,227,0.08));
+  border-radius: 10px; border: 1px solid rgba(108,92,231,0.15);
+}
+.audio-player-custom label {
+  display: block; font-size: 0.75rem; font-weight: 600;
+  color: var(--purple); margin-bottom: 0.4rem;
+}
+.audio-player-custom audio {
+  width: 100%; height: 36px; border-radius: 6px;
+}
+/* Purple tint for webkit audio */
+.audio-player-custom audio::-webkit-media-controls-panel { background: rgba(108,92,231,0.06); }
+
+/* ===== DIAGRAMS ===== */
+.diagram-section { max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; }
+.diagram-card {
+  background: var(--diagram-bg); border-radius: 16px; box-shadow: var(--shadow);
+  overflow: hidden; transition: background 0.4s;
+}
+.diagram-card h3 { padding: 1.5rem 1.5rem 0.25rem; font-size: 1.1rem; font-weight: 700; }
+.diagram-card .diagram-sub { padding: 0 1.5rem 1rem; font-size: 0.8rem; color: var(--text-light); }
+.diagram-svg-wrap { padding: 1rem 1.5rem 1.5rem; display: flex; justify-content: center; }
+.diagram-svg-wrap svg { max-width: 100%; height: auto; }
+.diagram-caption {
+  padding: 0.75rem 1.5rem 1.25rem; font-size: 0.75rem; color: #b2bec3;
+  font-style: italic; text-align: center; border-top: 1px solid var(--border-light);
+}
+
+/* Diagram animation states */
+.diagram-card.animate-in .anim-circle { animation: expandCircle 0.8s ease-out forwards; }
+.diagram-card .anim-circle { opacity: 0; transform-origin: center; }
+@keyframes expandCircle { from { opacity:0; r:0; } to { opacity:1; } }
+
+.diagram-card.animate-in .anim-step { opacity: 0; animation: fadeSlideIn 0.5s ease-out forwards; }
+@keyframes fadeSlideIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+
+.diagram-card.animate-in .anim-dim { opacity: 0; animation: revealDim 0.6s ease-out forwards; }
+@keyframes revealDim { from { opacity:0; transform: translateX(-15px); } to { opacity:1; transform: translateX(0); } }
+
+/* ===== REFERENCES ===== */
+.references-section {
+  max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem;
+}
+.references-section h2 {
+  font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem; border-bottom: 2px solid var(--ref-border);
+}
+.ref-list { list-style: none; }
+.ref-list li {
+  font-size: 0.85rem; line-height: 1.7; margin-bottom: 0.6rem;
+  padding-left: 2.5rem; text-indent: -2.5rem;
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar-fixed {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--nav-bg); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-light);
+  padding: 0.5rem 1.5rem; z-index: 99;
+  display: flex; align-items: center; gap: 1rem;
+  font-size: 0.8rem; color: var(--text-light);
+  transition: background 0.4s, transform 0.3s;
+}
+.progress-bar-fixed.hidden { transform: translateY(100%); }
+.progress-track {
+  flex: 1; height: 6px; background: rgba(128,128,128,0.15); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 3px; transition: width 0.5s ease;
+}
+.progress-text { font-weight: 600; white-space: nowrap; }
+
+/* ===== SCROLL TOP ===== */
+.scroll-top {
+  position: fixed; bottom: 3.5rem; right: 2rem;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--purple); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; cursor: pointer;
+  box-shadow: 0 4px 15px rgba(108,92,231,0.4);
+  transition: all 0.3s; opacity: 0; pointer-events: none;
+  z-index: 99; text-decoration: none; border: none;
+}
+.scroll-top.visible { opacity: 1; pointer-events: all; }
+.scroll-top:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(108,92,231,0.5); }
+
+/* ===== PRINT ===== */
+@media print {
+  .nav, .cover-scroll, .node-toggle, .progress-bar-fixed, .scroll-top,
+  .search-bar, .nav-actions, .network-section { display: none !important; }
+  .cover {
+    min-height: auto; padding: 3rem 2rem; background: white !important;
+    color: black !important; -webkit-print-color-adjust: exact;
+    print-color-adjust: exact; page-break-after: always;
+  }
+  .cover h1 { color: var(--purple); }
+  body { background: white; font-size: 10pt; }
+  .node-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .node-detail { max-height: none !important; }
+  .layer-section { padding: 1.5rem 0; }
+  .diagram-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .nodes-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .audio-player-custom { display: none; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .nodes-grid { grid-template-columns: 1fr; }
+  .cover h1 { font-size: 1.8rem; }
+  .layer-header h2 { font-size: 1.2rem; }
+  .nav-inner { padding: 0 0.5rem; }
+  .nav a, .nav button { padding: 0.75rem 0.75rem; font-size: 0.7rem; }
+  .progress-bar-fixed { padding: 0.4rem 1rem; font-size: 0.7rem; }
+}
+
+/* Layer filter fade */
+.node-card.layer-hidden { display: none; }
+.layer-section.layer-hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ===== ACADEMIC COVER PAGE (matches university format) ===== -->
+<section id="academic-cover" style="
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px 20px;
+  font-family: 'Times New Roman', Georgia, serif;
+  color: #333;
+  text-align: center;
+  position: relative;
+  page-break-after: always;
+">
+  <!-- University Logo (real) -->
+  <div style="margin-bottom: 30px;">
+    <img src="data:image/png;base64,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" alt="Universidad del Istmo" style="max-width: 220px; height: auto;">
+  </div>
+
+  <!-- University / Program -->
+  <div style="margin-bottom: 35px; line-height: 1.8;">
+    <div style="font-size: 16px;">Universidad del Istmo</div>
+    <div style="font-size: 16px;">Licenciatura en Psicología</div>
+    <div style="font-size: 17px; font-weight: 600;">Psicología Social</div>
+  </div>
+
+  <!-- Module / Activity -->
+  <div style="margin-bottom: 30px; line-height: 1.8;">
+    <div style="font-size: 15px;">Módulo 1</div>
+    <div style="font-size: 15px;">Actividad 1</div>
+  </div>
+
+  <!-- Assignment Title -->
+  <div style="margin-bottom: 50px;">
+    <div style="font-size: 18px; font-weight: 600;">Investigación sobre la Psicología Social</div>
+    <div style="font-size: 14px; color: #666; margin-top: 8px;">Mapa Multimedia Integrador</div>
+  </div>
+
+  <!-- Professor -->
+  <div style="margin-bottom: 45px; line-height: 1.8;">
+    <div style="font-size: 15px;">Profesora:</div>
+    <div style="font-size: 17px; font-weight: 600;">Milagros Agüero Sepúlveda</div>
+  </div>
+
+  <!-- Student -->
+  <div style="margin-bottom: 45px; line-height: 1.8;">
+    <div style="font-size: 15px;">Presentado por:</div>
+    <div style="font-size: 17px; font-weight: 600;">José Manuel Meana Barrera</div>
+    <div style="font-size: 14px;">cédula 3-706-528</div>
+  </div>
+
+  <!-- Date -->
+  <div style="margin-bottom: 30px;">
+    <div style="font-size: 15px;">Panamá, 19 de febrero de 2026.</div>
+  </div>
+
+  <!-- Scroll to content -->
+  <a href="#cover" style="
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 28px;
+    background: #1B2A6B;
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+  " onmouseover="this.style.background='#E63033'" onmouseout="this.style.background='#1B2A6B'">↓ Explorar el Mapa Interactivo</a>
+
+  <!-- Bottom bar (Panama flag colors) -->
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 6px; display: flex;">
+    <div style="flex: 1; background: #E63033;"></div>
+    <div style="flex: 1; background: #ffffff;"></div>
+    <div style="flex: 1; background: #1B2A6B;"></div>
+  </div>
+</section>
+
+<!-- ===== INTERACTIVE COVER ===== -->
+<section class="cover" id="cover">
+  <div class="cover-university">Universidad del Istmo</div>
+  <div class="cover-faculty">Facultad de Psicología · Psicología Social</div>
+  <h1>Mapa Multimedia Integrador de Psicología Social</h1>
+  <p class="cover-subtitle">25 conceptos · 33 relaciones · 4 capas temáticas · 3 diagramas integrados</p>
+  <div class="cover-meta">
+    <span><strong>Estudiante:</strong> José Manuel Meana Barrera</span>
+    <span><strong>Docente:</strong> Milagros Agüero Sepúlveda</span>
+    <span><strong>Fecha:</strong> 12 de marzo de 2026</span>
+  </div>
+  <a href="#networkViz" class="cover-scroll">↓ Explorar el Mapa</a>
+  <div class="cover-layers">
+    <span class="cover-layer-badge" style="background:rgba(108,92,231,0.3)">1 · Fundamentos</span>
+    <span class="cover-layer-badge" style="background:rgba(9,132,227,0.3)">2 · Cognición Social</span>
+    <span class="cover-layer-badge" style="background:rgba(214,48,49,0.3)">3 · Conducta</span>
+    <span class="cover-layer-badge" style="background:rgba(0,184,148,0.3)">4 · Soporte y Exclusión</span>
+  </div>
+</section>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <a href="#networkViz" data-layer="refs">Mapa</a>
+    <a href="#layer1" data-layer="1" data-filter="1">Fundamentos</a>
+    <a href="#layer2" data-layer="2" data-filter="2">Cognición</a>
+    <a href="#layer3" data-layer="3" data-filter="3">Conducta</a>
+    <a href="#layer4" data-layer="4" data-filter="4">Soporte</a>
+    <a href="#referencias" data-layer="refs">Referencias</a>
+    <div class="nav-actions">
+      <button class="nav-btn" id="showAllBtn" title="Mostrar todos" style="display:none;">✕ Filtro</button>
+      <button class="nav-btn" id="darkToggle" title="Modo oscuro">🌙</button>
+      <button class="nav-btn" id="printBtn" title="Descargar PDF">🖨️</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== SEARCH ===== -->
+<div class="search-bar" id="searchBarSection">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar conceptos (ej: agresión, Bandura, apoyo social…)">
+  </div>
+</div>
+
+<!-- ===== NETWORK VISUALIZATION ===== -->
+<section class="network-section" id="networkViz">
+  <h2>Mapa Interactivo de Relaciones</h2>
+  <p>Haz clic en un nodo para ver su detalle. Arrastra para reorganizar. Zoom con scroll.</p>
+  <div class="network-container" id="networkContainer">
+    <div class="network-tooltip" id="netTooltip"></div>
+    <div class="network-mobile-list" id="mobileList"></div>
+    <div class="network-legend">
+      <div class="network-legend-item"><div class="network-legend-dot" style="background:var(--purple)"></div> Fundamentos</div>
+      <div class="network-legend-item"><div class="network-legend-dot" style="background:var(--blue)"></div> Cognición Social</div>
+      <div class="network-legend-item"><div class="network-legend-dot" style="background:var(--red)"></div> Conducta</div>
+      <div class="network-legend-item"><div class="network-legend-dot" style="background:var(--green)"></div> Soporte / Exclusión</div>
+      <div class="network-legend-item" style="margin-left:1rem;"><span style="border-bottom:2px solid #636e72;display:inline-block;width:20px;margin-right:4px;"></span> Jerárquico</div>
+      <div class="network-legend-item"><span style="border-bottom:2px dashed #636e72;display:inline-block;width:20px;margin-right:4px;"></span> Inter-módulo</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LAYER 1: FUNDAMENTOS ===== -->
+<section class="layer-section" id="layer1" data-layer="1" style="background: linear-gradient(180deg, var(--purple-bg) 0%, var(--bg) 100%);">
+  <div class="layer-inner">
+    <div class="layer-header">
+      <div class="layer-number" style="background: var(--purple);">1</div>
+      <div>
+        <h2 style="color: var(--purple);">Fundamentos y Debates Epistemológicos</h2>
+        <div class="layer-desc">Bases teóricas, definiciones fundacionales y orientación comunitaria</div>
+      </div>
+    </div>
+    <div class="nodes-grid">
+
+      <!-- Node 1 -->
+      <div class="node-card layer-1" id="node1" data-node="1" data-layer="1" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">1</div>
+          <div class="node-title">Psicología Social <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Investigación científica de cómo influye la presencia real, imaginada o implícita de los otros en pensamientos, sentimientos y conductas.</div>
+        <div class="node-citation">(Allport, 1954, citado en Hogg y Vaughan, 2010, p. 4)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Fundamenta</span>
+            <p>La definición de Allport sigue siendo la más citada en el campo. Abarca tres dimensiones de influencia social: <strong>presencia real</strong> (interacción directa), <strong>imaginada</strong> (anticipación del otro) e <strong>implícita</strong> (normas sociales internalizadas).</p>
+            <p>La PS se sitúa en la intersección entre psicología y sociología, estudiando al individuo dentro del contexto social. Sus métodos van desde la experimentación controlada hasta la investigación-acción comunitaria.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node2" href="#node2">→ Fenómenos sociopsicológicos</a>
+              <a class="node-link-tag" data-target="node3" href="#node3">→ PS Comunitaria</a>
+              <a class="node-link-tag" data-target="node6" href="#node6">→ Cognición Social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 2 -->
+      <div class="node-card layer-1" id="node2" data-node="2" data-layer="1" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">2</div>
+          <div class="node-title">Fenómenos Sociopsicológicos <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Tres principios organizadores: condicionamiento, desarrollo y comunicación. Constituyen el objeto de estudio de la PS.</div>
+        <div class="node-citation">(Bello y Casales, 2005, p. 15)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Organiza</span>
+            <p><strong>Condicionamiento:</strong> cómo el entorno social moldea respuestas conductuales. <strong>Desarrollo:</strong> formación de la personalidad social a lo largo del ciclo vital. <strong>Comunicación:</strong> procesos de intercambio simbólico que permiten la vida en grupo.</p>
+            <p>Estos tres principios articulan los niveles de análisis: individual, grupal y societal, ofreciendo un marco integrador para la disciplina.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node1" href="#node1">→ Psicología Social</a>
+              <a class="node-link-tag" data-target="node6" href="#node6">→ Representaciones sociales</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 3 -->
+      <div class="node-card layer-1" id="node3" data-node="3" data-layer="1" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">3</div>
+          <div class="node-title">Psicología Social Comunitaria <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Nace de la disconformidad con la PS individualista; se orienta a aspectos positivos y recursos de las comunidades.</div>
+        <div class="node-citation">(Montero, 2004)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Transforma</span>
+            <p>La PSC surge en Latinoamérica como respuesta a una psicología social importada del Norte Global que no respondía a las realidades locales. Se enfoca en <strong>fortalezas comunitarias</strong> en lugar de patologías individuales.</p>
+            <p>Sus pilares incluyen: participación activa de la comunidad, investigación-acción participativa (IAP), compromiso con la transformación social y el énfasis en el poder compartido.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node4" href="#node4">→ Comunidad</a>
+              <a class="node-link-tag" data-target="node5" href="#node5">→ Rol del psicólogo</a>
+              <a class="node-link-tag" data-target="node1" href="#node1">← Psicología Social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 4 -->
+      <div class="node-card layer-1" id="node4" data-node="4" data-layer="1" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">4</div>
+          <div class="node-title">Comunidad <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Grupo social dinámico, histórico y culturalmente constituido que comparte intereses, objetivos, necesidades y problemas.</div>
+        <div class="node-citation">(Montero, 1998, en Musitu et al., 2015)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Contextualiza</span>
+            <p>La comunidad no es un espacio estático sino un <strong>proceso vivo</strong>. Se define por sentido de pertenencia, historia compartida, identidad colectiva y relaciones de interdependencia. Incluye dimensiones geográficas, relacionales y simbólicas.</p>
+            <p>Es el escenario donde opera la PSC y donde se generan las redes de apoyo social, las representaciones compartidas y las dinámicas de inclusión/exclusión.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node3" href="#node3">← PS Comunitaria</a>
+              <a class="node-link-tag" data-target="node21" href="#node21">→ Apoyo social</a>
+              <a class="node-link-tag" data-target="node6" href="#node6">← Representaciones sociales</a>
+              <a class="node-link-tag" data-target="node18" href="#node18">← Efecto espectador</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 5 -->
+      <div class="node-card layer-1" id="node5" data-node="5" data-layer="1" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">5</div>
+          <div class="node-title">Rol del Psicólogo Comunitario <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Agente de cambio social y conceptualizador participante en transformaciones comunitarias.</div>
+        <div class="node-citation">(Aguilar y Cruz, 2002)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Interviene</span>
+            <p>El psicólogo comunitario no actúa como experto externo sino como <strong>facilitador</strong> que acompaña los procesos de cambio. Su rol incluye: diagnosticar necesidades con la comunidad, catalizar la organización, fortalecer liderazgos locales y sistematizar experiencias.</p>
+            <p>Opera bajo el principio de que las comunidades poseen recursos y saberes propios; el profesional los potencia, no los sustituye.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node3" href="#node3">← PS Comunitaria</a>
+              <a class="node-link-tag" data-target="node17" href="#node17">→ Conducta prosocial</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== LAYER 2: COGNICIÓN SOCIAL ===== -->
+<section class="layer-section" id="layer2" data-layer="2" style="background: linear-gradient(180deg, var(--blue-bg) 0%, var(--bg) 100%);">
+  <div class="layer-inner">
+    <div class="layer-header">
+      <div class="layer-number" style="background: var(--blue);">2</div>
+      <div>
+        <h2 style="color: var(--blue);">Cognición Social</h2>
+        <div class="layer-desc">Representaciones, atribuciones y modelos de procesamiento social de la información</div>
+      </div>
+    </div>
+    <div class="nodes-grid">
+
+      <!-- Node 6 -->
+      <div class="node-card layer-2" id="node6" data-node="6" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">6</div>
+          <div class="node-title">Representaciones Sociales <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Modalidad particular del conocimiento cuya función es la elaboración de comportamientos y comunicación entre individuos.</div>
+        <div class="node-citation">(Moscovici, 1961, citado en Bautista, 2018, p. 202)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Construye</span>
+            <p><strong>3 tipos:</strong> Hegemónicas (compartidas por todo un grupo), emancipadas (propias de subgrupos), polémicas (generadas en conflictos entre grupos).</p>
+            <p><strong>2 procesos:</strong> <em>Objetivación</em> (convertir algo abstracto en imagen concreta) y <em>anclaje</em> (integrar lo nuevo en marcos de referencia preexistentes). Juntos permiten que el conocimiento científico se transforme en sentido común.</p>
+            <!-- AUDIO PLAYER 1 -->
+            <div class="audio-player-custom">
+              <label>🎧 Audio explicativo — Representaciones Sociales</label>
+              <audio controls preload="metadata">
+                <source src="/public/audio1-representaciones-sociales.mp3" type="audio/mpeg">
+                Tu navegador no soporta audio HTML5.
+              </audio>
+            </div>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node7" href="#node7">← Representaciones colectivas</a>
+              <a class="node-link-tag" data-target="node12" href="#node12">→ Agresión</a>
+              <a class="node-link-tag" data-target="node4" href="#node4">→ Comunidad</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 7 -->
+      <div class="node-card layer-2" id="node7" data-node="7" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">7</div>
+          <div class="node-title">Representaciones Colectivas <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Formas de conocimiento erigidas socialmente que no pueden explicarse desde percepciones individuales.</div>
+        <div class="node-citation">(Durkheim, 1912, citado en Bautista, 2018, p. 202)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Antecede</span>
+            <p>Durkheim postuló que la sociedad genera formas de pensamiento que trascienden al individuo: mitos, religión, ciencia, categorías de tiempo y espacio. Son <strong>hechos sociales</strong> con poder coercitivo.</p>
+            <p>Moscovici reformuló este concepto estático en uno dinámico: las representaciones <em>sociales</em> reconocen la agencia individual y la pluralidad dentro de una misma sociedad.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node6" href="#node6">→ Representaciones sociales</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 8 -->
+      <div class="node-card layer-2" id="node8" data-node="8" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">8</div>
+          <div class="node-title">Estilos Atribucionales <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Tendencia relativamente estable a realizar un tipo particular de atribuciones causales sobre los eventos.</div>
+        <div class="node-citation">(Buchanan y Seligman, 1995, en Sanjuán y Magallanes, 2007, p. 85)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Clasifica</span>
+            <p><strong>3 dimensiones:</strong></p>
+            <p>• <strong>Interno-externo:</strong> ¿la causa está en mí o fuera de mí?<br>
+            • <strong>Estable-inestable:</strong> ¿la causa persiste o es temporal?<br>
+            • <strong>Global-específico:</strong> ¿afecta todo o solo esta situación?</p>
+            <p>Un estilo atribucional pesimista (interno, estable, global para eventos negativos) se asocia con depresión y <strong>indefensión aprendida</strong> (Seligman). Un estilo optimista es protector.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node9" href="#node9">→ Heider</a>
+              <a class="node-link-tag" data-target="node12" href="#node12">→ Agresión</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 9 -->
+      <div class="node-card layer-2" id="node9" data-node="9" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">9</div>
+          <div class="node-title">Análisis Ingenuo de la Acción <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Las personas actúan como "científicos ingenuos" buscando causas internas (esfuerzo, capacidad) o externas (suerte, dificultad).</div>
+        <div class="node-citation">(Heider, 1958)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Origina</span>
+            <p>Heider identificó que las personas buscan constantemente <strong>explicar por qué ocurren las cosas</strong>, atribuyendo causas a factores personales o situacionales.</p>
+            <p><strong>"La conducta engulle al campo"</strong> = tendemos a sobreestimar causas internas y subestimar las situacionales. Esto se conoce como el <strong>error fundamental de atribución</strong> (Ross, 1977). Es la base de toda la teoría atribucional posterior.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node10" href="#node10">→ Jones y Davis</a>
+              <a class="node-link-tag" data-target="node11" href="#node11">→ Kelley</a>
+              <a class="node-link-tag" data-target="node16" href="#node16">→ Factores ambientales</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 10 -->
+      <div class="node-card layer-2" id="node10" data-node="10" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">10</div>
+          <div class="node-title">Inferencias Correspondientes <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Modelo centrado en causas internas. Tres juicios clave: intención, efectos no comunes y deseabilidad social.</div>
+        <div class="node-citation">(Jones y Davis, 1965)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Profundiza</span>
+            <p>Cuando la acción tiene <strong>pocos efectos no comunes</strong> (consecuencias únicas de esa elección) y es <strong>socialmente indeseable</strong>, inferimos con mayor confianza que refleja la disposición interna del actor.</p>
+            <p>Dos moduladores adicionales: <strong>Relevancia hedónica</strong> (nos afecta personalmente) y <strong>personalismo</strong> (creemos que la acción fue dirigida hacia nosotros). Ambos aumentan la atribución interna.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node9" href="#node9">← Heider</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 11 -->
+      <div class="node-card layer-2" id="node11" data-node="11" data-layer="2" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">11</div>
+          <div class="node-title">Covarianza y Configuración <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Con información múltiple: covariación (consenso, distintividad, consistencia). Con información limitada: configuración.</div>
+        <div class="node-citation">(Kelley, 1973)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Sistematiza</span>
+            <p><strong>Modelo de covariación</strong> (info de múltiples observaciones):</p>
+            <p>• <strong>Consenso:</strong> ¿otros reaccionan igual?<br>
+            • <strong>Distintividad:</strong> ¿el sujeto reacciona igual ante otros estímulos?<br>
+            • <strong>Consistencia:</strong> ¿reacciona igual en otros momentos?</p>
+            <p><strong>Modelo de configuración</strong> (info limitada): se usan esquemas causales preexistentes. <strong>Principio de desestimación:</strong> una causa se descuenta si hay otras posibles. <strong>Principio de aumento:</strong> una causa gana peso si opera pese a factores inhibidores.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node9" href="#node9">← Heider</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DIAGRAM: Kelley -->
+    <div class="diagram-section" style="max-width:900px; margin: 2.5rem auto; padding: 0;">
+      <div class="diagram-card" id="diagramKelley" data-diagram="kelley">
+        <h3 style="color: var(--blue);">Diagrama 3 · Modelo de Covariación de Kelley (1973)</h3>
+        <p class="diagram-sub">Tres dimensiones informativas para atribuir causalidad</p>
+        <div class="diagram-svg-wrap">
+          <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" style="max-width: 650px;">
+            <rect class="anim-dim" x="250" y="20" width="200" height="50" rx="12" fill="#0984e3" style="animation-delay:0s"/>
+            <text class="anim-dim" x="350" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0s">EVENTO OBSERVADO</text>
+            <text class="anim-dim" x="350" y="58" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.8)" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0s">"Juan se ríe del comediante"</text>
+            <line class="anim-dim" x1="300" y1="70" x2="120" y2="110" stroke="#0984e3" stroke-width="1.5" style="animation-delay:0.3s"/>
+            <line class="anim-dim" x1="350" y1="70" x2="350" y2="110" stroke="#0984e3" stroke-width="1.5" style="animation-delay:0.3s"/>
+            <line class="anim-dim" x1="400" y1="70" x2="580" y2="110" stroke="#0984e3" stroke-width="1.5" style="animation-delay:0.3s"/>
+            <rect class="anim-dim" x="20" y="110" width="200" height="44" rx="10" fill="#74b9ff" style="animation-delay:0.4s"/>
+            <text class="anim-dim" x="120" y="130" text-anchor="middle" font-size="11" font-weight="700" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.4s">CONSENSO</text>
+            <text class="anim-dim" x="120" y="145" text-anchor="middle" font-size="8.5" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.4s">¿Otros también se ríen?</text>
+            <rect class="anim-dim" x="250" y="110" width="200" height="44" rx="10" fill="#74b9ff" style="animation-delay:0.6s"/>
+            <text class="anim-dim" x="350" y="130" text-anchor="middle" font-size="11" font-weight="700" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.6s">DISTINTIVIDAD</text>
+            <text class="anim-dim" x="350" y="145" text-anchor="middle" font-size="8.5" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.6s">¿Juan se ríe de todo?</text>
+            <rect class="anim-dim" x="480" y="110" width="200" height="44" rx="10" fill="#74b9ff" style="animation-delay:0.8s"/>
+            <text class="anim-dim" x="580" y="130" text-anchor="middle" font-size="11" font-weight="700" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.8s">CONSISTENCIA</text>
+            <text class="anim-dim" x="580" y="145" text-anchor="middle" font-size="8.5" fill="#2d3436" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.8s">¿Juan siempre se ríe de él?</text>
+            <line class="anim-dim" x1="120" y1="154" x2="120" y2="190" stroke="#0984e3" stroke-width="1" stroke-dasharray="4,2" style="animation-delay:1s"/>
+            <line class="anim-dim" x1="350" y1="154" x2="350" y2="190" stroke="#0984e3" stroke-width="1" stroke-dasharray="4,2" style="animation-delay:1s"/>
+            <line class="anim-dim" x1="580" y1="154" x2="580" y2="190" stroke="#0984e3" stroke-width="1" stroke-dasharray="4,2" style="animation-delay:1s"/>
+            <rect class="anim-dim" x="20" y="190" width="660" height="44" rx="10" fill="#eef6ff" stroke="#0984e3" stroke-width="1" style="animation-delay:1.2s"/>
+            <text class="anim-dim" x="350" y="210" text-anchor="middle" font-size="10" font-weight="700" fill="#0984e3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1.2s">Alto consenso + Alta distintividad + Alta consistencia = ATRIBUCIÓN EXTERNA</text>
+            <text class="anim-dim" x="350" y="224" text-anchor="middle" font-size="8.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1.2s">"El comediante es gracioso" → causa en el estímulo</text>
+            <rect class="anim-dim" x="20" y="248" width="660" height="44" rx="10" fill="#fff0f0" stroke="#d63031" stroke-width="1" style="animation-delay:1.4s"/>
+            <text class="anim-dim" x="350" y="268" text-anchor="middle" font-size="10" font-weight="700" fill="#d63031" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1.4s">Bajo consenso + Baja distintividad + Alta consistencia = ATRIBUCIÓN INTERNA</text>
+            <text class="anim-dim" x="350" y="282" text-anchor="middle" font-size="8.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1.4s">"Juan es risueño" → causa en la persona</text>
+            <text class="anim-dim" x="350" y="310" text-anchor="middle" font-size="8" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1.6s">Principios complementarios: Desestimación (descuento) y Aumento</text>
+          </svg>
+        </div>
+        <div class="diagram-caption">Figura 3. Modelo de covariación de Kelley (1973). Elaboración propia basada en Morales et al. (2007).</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== LAYER 3: CONDUCTA ===== -->
+<section class="layer-section" id="layer3" data-layer="3" style="background: linear-gradient(180deg, var(--red-bg) 0%, var(--bg) 100%);">
+  <div class="layer-inner">
+    <div class="layer-header">
+      <div class="layer-number" style="background: var(--red);">3</div>
+      <div>
+        <h2 style="color: var(--red);">Conducta Prosocial y Agresiva</h2>
+        <div class="layer-desc">Dos polos de la conducta social: agresión y ayuda, sus teorías y modelos explicativos</div>
+      </div>
+    </div>
+    <div class="nodes-grid">
+
+      <!-- Node 12 -->
+      <div class="node-card layer-3" id="node12" data-node="12" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">12</div>
+          <div class="node-title">Agresión <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Conducta dirigida a dañar a otro ser vivo motivado a evitar tal trato. Tipos: afectiva/hostil vs instrumental.</div>
+        <div class="node-citation">(Barón y Richardson, 1994, en Morales et al., 2007, p. 417)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Define</span>
+            <p><strong>Agresión afectiva/hostil:</strong> motivada por ira, objetivo es dañar. <strong>Agresión instrumental:</strong> el daño es un medio para obtener otro fin (poder, recursos, estatus).</p>
+            <p>La definición exige tres condiciones: intención de dañar, la víctima desea evitar el daño, y se trata de un ser vivo (no un objeto). Es un concepto central que conecta con múltiples marcos teóricos.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node13" href="#node13">→ Teorías innatas</a>
+              <a class="node-link-tag" data-target="node14" href="#node14">→ Aprendizaje social</a>
+              <a class="node-link-tag" data-target="node15" href="#node15">→ Frustración-agresión</a>
+              <a class="node-link-tag" data-target="node16" href="#node16">→ Factores ambientales</a>
+              <a class="node-link-tag" data-target="node17" href="#node17">↔ Conducta prosocial</a>
+              <a class="node-link-tag" data-target="node25" href="#node25">← Exclusión social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 13 -->
+      <div class="node-card layer-3" id="node13" data-node="13" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">13</div>
+          <div class="node-title">Teorías Innatas de la Agresión <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Perspectivas que sitúan la agresión como disposición biológica: psicoanálisis, etología, sociobiología y cálculo emocional.</div>
+        <div class="node-citation">(Freud; Lorenz; Wilson; Blanchard)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Explica</span>
+            <p><strong>Freud:</strong> Eros (vida) vs Thánatos (muerte). La agresión es energía pulsional que necesita descargarse (catarsis).</p>
+            <p><strong>Lorenz (etología):</strong> La agresión es una disposición innata con valor adaptativo para la supervivencia de la especie.</p>
+            <p><strong>Wilson (sociobiología):</strong> La agresión favorece la supervivencia del individuo y la transmisión genética.</p>
+            <p><strong>Blanchard (cálculo emocional):</strong> Modelo basado en el eje cólera-miedo. El organismo calcula riesgos antes de agredir.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node12" href="#node12">← Agresión</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 14 -->
+      <div class="node-card layer-3" id="node14" data-node="14" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">14</div>
+          <div class="node-title">Aprendizaje Social <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Los niños aprenden agresión por observación e imitación de modelos. Las imágenes se archivan en memoria y se repiten.</div>
+        <div class="node-citation">(Bandura, 1973)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Modela</span>
+            <p>El famoso <strong>experimento del muñeco Bobo</strong> demostró que niños que observan un modelo agresivo reproducen esas conductas, especialmente si el modelo es recompensado.</p>
+            <p>Procesos clave: <strong>atención</strong> (percibir el modelo), <strong>retención</strong> (almacenar en memoria), <strong>reproducción</strong> (capacidad motora) y <strong>motivación</strong> (refuerzo esperado). Este modelo también explica el aprendizaje de conducta prosocial.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node12" href="#node12">← Agresión</a>
+              <a class="node-link-tag" data-target="node17" href="#node17">→ Conducta prosocial</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 15 -->
+      <div class="node-card layer-3" id="node15" data-node="15" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">15</div>
+          <div class="node-title">Frustración-Agresión <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Integra lo innato y ambiental: la frustración solo genera agresión si el sujeto ha aprendido a responder así.</div>
+        <div class="node-citation">(Dollard et al.; revisado por Berkowitz, 1989)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Integra</span>
+            <p><strong>Hipótesis original</strong> (Dollard et al., 1939): toda frustración conduce a agresión y toda agresión proviene de frustración. Fue criticada por ser demasiado determinista.</p>
+            <p><strong>Revisión de Berkowitz</strong> (1989): la frustración genera <strong>afecto negativo</strong> y <strong>activación (arousal)</strong>, pero la respuesta agresiva depende del aprendizaje previo y de la presencia de señales ambientales asociadas a la agresión.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node12" href="#node12">← Agresión</a>
+              <a class="node-link-tag" data-target="node21" href="#node21">→ Apoyo social (moderador)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 16 -->
+      <div class="node-card layer-3" id="node16" data-node="16" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">16</div>
+          <div class="node-title">Factores Ambientales de Agresión <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Cuatro factores del entorno que facilitan la agresión: ruido, temperatura, hacinamiento y dolor.</div>
+        <div class="node-citation">(Geen, 1978; Quetelet, 1833; Berkowitz, 1993)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Facilita</span>
+            <p><strong>Ruido:</strong> la impredecibilidad del ruido (no solo el volumen) aumenta la agresión (Geen, 1978).</p>
+            <p><strong>Temperatura:</strong> la "ley térmica de la delincuencia" (Quetelet, 1833) —los crímenes violentos aumentan con el calor— sigue siendo relevante.</p>
+            <p><strong>Hacinamiento:</strong> no es la densidad objetiva sino la <strong>experiencia subjetiva</strong> de agobio lo que genera conductas agresivas.</p>
+            <p><strong>Dolor:</strong> el dolor físico activa afecto negativo que predispone a la agresión (Berkowitz, 1993).</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node12" href="#node12">← Agresión</a>
+              <a class="node-link-tag" data-target="node9" href="#node9">← Heider (causas externas)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 17 -->
+      <div class="node-card layer-3" id="node17" data-node="17" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">17</div>
+          <div class="node-title">Conducta Prosocial <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Acciones que benefician a las personas y son fundamentales para el buen funcionamiento de la sociedad.</div>
+        <div class="node-citation">(Bautista, 2018, p. 228)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Beneficia</span>
+            <p>Tres conceptos relacionados pero distintos:</p>
+            <p>• <strong>Conducta prosocial:</strong> cualquier acción que beneficia a otros (puede tener motivación egoísta).<br>
+            • <strong>Altruismo:</strong> ayuda sin expectativa de recibir nada a cambio (Batson, 1998).<br>
+            • <strong>Conducta de ayuda:</strong> acciones específicas de asistencia ante una necesidad.</p>
+            <p>Es el polo opuesto de la agresión y se modela por factores situacionales (efecto espectador) y motivacionales (coste-recompensa).</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node18" href="#node18">→ Efecto espectador</a>
+              <a class="node-link-tag" data-target="node19" href="#node19">→ Coste-recompensa</a>
+              <a class="node-link-tag" data-target="node12" href="#node12">↔ Agresión</a>
+              <a class="node-link-tag" data-target="node5" href="#node5">← Rol del psicólogo</a>
+              <a class="node-link-tag" data-target="node14" href="#node14">← Aprendizaje social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 18 -->
+      <div class="node-card layer-3" id="node18" data-node="18" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">18</div>
+          <div class="node-title">Efecto Espectador <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">A más personas observando una emergencia, menor probabilidad de que cada una ayude. Difusión de responsabilidad.</div>
+        <div class="node-citation">(Latané y Darley, 1968)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Inhibe</span>
+            <p>Inspirado en el <strong>caso de Kitty Genovese</strong> (1964), donde 38 testigos presenciaron un asesinato sin intervenir. Latané y Darley identificaron la <strong>difusión de responsabilidad</strong>: cada persona asume que otro actuará.</p>
+            <p><strong>5 pasos del modelo de intervención:</strong> (1) Notar el evento, (2) Interpretarlo como emergencia, (3) Asumir responsabilidad personal, (4) Saber cómo ayudar, (5) Decidir actuar. Cada paso es un filtro donde la ayuda puede bloquearse.</p>
+            <!-- AUDIO PLAYER 2 -->
+            <div class="audio-player-custom">
+              <label>🎧 Audio explicativo — Efecto Espectador</label>
+              <audio controls preload="metadata">
+                <source src="/public/audio2-efecto-espectador.mp3" type="audio/mpeg">
+                Tu navegador no soporta audio HTML5.
+              </audio>
+            </div>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node17" href="#node17">← Conducta prosocial</a>
+              <a class="node-link-tag" data-target="node4" href="#node4">→ Comunidad</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 19 -->
+      <div class="node-card layer-3" id="node19" data-node="19" data-layer="3" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">19</div>
+          <div class="node-title">Modelo Activación / Coste-Recompensa <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">La decisión de ayudar depende de un cálculo entre empatía, excitación psicológica y costos percibidos.</div>
+        <div class="node-citation">(Piliavin et al., 1981)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Calcula</span>
+            <p>Este modelo asume que el propio interés es el motor principal. <strong>3 factores:</strong></p>
+            <p>• <strong>Empatía:</strong> capacidad de ponerse en el lugar del otro.<br>
+            • <strong>Excitación psicológica:</strong> activación fisiológica ante la emergencia.<br>
+            • <strong>Costos:</strong> esfuerzo, riesgo, tiempo invertido.</p>
+            <p><strong>Matriz de decisión:</strong> Cuando costos de ayudar son bajos y costos de no ayudar son altos → se ayuda directamente. Cuando ambos son altos → se busca ayuda indirecta. Cuando costos de ayudar son altos y de no ayudar son bajos → no se interviene.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node17" href="#node17">← Conducta prosocial</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DIAGRAM: Latané & Darley -->
+    <div class="diagram-section" style="max-width:900px; margin: 2.5rem auto; padding: 0;">
+      <div class="diagram-card" id="diagramLatane" data-diagram="latane">
+        <h3 style="color: var(--red);">Diagrama 2 · Modelo de Intervención de Latané y Darley (1968)</h3>
+        <p class="diagram-sub">5 pasos decisionales ante una emergencia — cada uno puede bloquear la ayuda</p>
+        <div class="diagram-svg-wrap">
+          <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" style="max-width: 660px;">
+            <g class="anim-step" style="animation-delay:0s">
+              <rect x="10" y="30" width="120" height="65" rx="10" fill="#d63031"/>
+              <text x="70" y="52" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif">PASO 1</text>
+              <text x="70" y="66" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">Notar</text>
+              <text x="70" y="79" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">el evento</text>
+            </g>
+            <g class="anim-step" style="animation-delay:0.3s">
+              <rect x="150" y="30" width="120" height="65" rx="10" fill="#d63031" opacity="0.9"/>
+              <text x="210" y="52" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif">PASO 2</text>
+              <text x="210" y="66" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">Interpretar como</text>
+              <text x="210" y="79" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">emergencia</text>
+            </g>
+            <g class="anim-step" style="animation-delay:0.6s">
+              <rect x="290" y="30" width="120" height="65" rx="10" fill="#d63031" opacity="0.8"/>
+              <text x="350" y="52" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif">PASO 3</text>
+              <text x="350" y="66" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">Asumir</text>
+              <text x="350" y="79" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">responsabilidad</text>
+            </g>
+            <g class="anim-step" style="animation-delay:0.9s">
+              <rect x="430" y="30" width="120" height="65" rx="10" fill="#d63031" opacity="0.7"/>
+              <text x="490" y="52" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif">PASO 4</text>
+              <text x="490" y="66" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">Saber cómo</text>
+              <text x="490" y="79" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">ayudar</text>
+            </g>
+            <g class="anim-step" style="animation-delay:1.2s">
+              <rect x="570" y="30" width="120" height="65" rx="10" fill="#d63031" opacity="0.6"/>
+              <text x="630" y="52" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif">PASO 5</text>
+              <text x="630" y="66" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">Decidir</text>
+              <text x="630" y="79" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.9)" font-family="Plus Jakarta Sans, sans-serif">actuar</text>
+            </g>
+            <line class="anim-step" x1="130" y1="62" x2="150" y2="62" stroke="#d63031" stroke-width="2" style="animation-delay:0.15s"/>
+            <line class="anim-step" x1="270" y1="62" x2="290" y2="62" stroke="#d63031" stroke-width="2" style="animation-delay:0.45s"/>
+            <line class="anim-step" x1="410" y1="62" x2="430" y2="62" stroke="#d63031" stroke-width="2" style="animation-delay:0.75s"/>
+            <line class="anim-step" x1="550" y1="62" x2="570" y2="62" stroke="#d63031" stroke-width="2" style="animation-delay:1.05s"/>
+            <g class="anim-step" style="animation-delay:1.5s">
+              <line x1="70" y1="95" x2="70" y2="130" stroke="#b2bec3" stroke-width="1" stroke-dasharray="3,2"/>
+              <line x1="210" y1="95" x2="210" y2="130" stroke="#b2bec3" stroke-width="1" stroke-dasharray="3,2"/>
+              <line x1="350" y1="95" x2="350" y2="130" stroke="#b2bec3" stroke-width="1" stroke-dasharray="3,2"/>
+              <line x1="490" y1="95" x2="490" y2="130" stroke="#b2bec3" stroke-width="1" stroke-dasharray="3,2"/>
+              <line x1="630" y1="95" x2="630" y2="130" stroke="#b2bec3" stroke-width="1" stroke-dasharray="3,2"/>
+              <rect x="10" y="130" width="120" height="40" rx="6" fill="#f0f0f0"/>
+              <text x="70" y="148" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">Distracción,</text>
+              <text x="70" y="160" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">absorción propia</text>
+              <rect x="150" y="130" width="120" height="40" rx="6" fill="#f0f0f0"/>
+              <text x="210" y="148" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">Ignorancia</text>
+              <text x="210" y="160" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">pluralista</text>
+              <rect x="290" y="130" width="120" height="40" rx="6" fill="#f0f0f0"/>
+              <text x="350" y="148" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">Difusión de</text>
+              <text x="350" y="160" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">responsabilidad</text>
+              <rect x="430" y="130" width="120" height="40" rx="6" fill="#f0f0f0"/>
+              <text x="490" y="148" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">Falta de</text>
+              <text x="490" y="160" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">competencia</text>
+              <rect x="570" y="130" width="120" height="40" rx="6" fill="#f0f0f0"/>
+              <text x="630" y="148" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">Costos altos,</text>
+              <text x="630" y="160" text-anchor="middle" font-size="7.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif">riesgo personal</text>
+            </g>
+            <g class="anim-step" style="animation-delay:1.8s">
+              <text x="350" y="200" text-anchor="middle" font-size="8" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif">▼ Si falla cualquier paso</text>
+              <rect x="250" y="210" width="200" height="35" rx="8" fill="#fff0f0" stroke="#d63031" stroke-width="1"/>
+              <text x="350" y="232" text-anchor="middle" font-size="10" font-weight="600" fill="#d63031" font-family="Plus Jakarta Sans, sans-serif">NO SE AYUDA</text>
+              <text x="630" y="200" text-anchor="middle" font-size="8" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif">▼ Si pasa todos</text>
+              <rect x="570" y="210" width="120" height="35" rx="8" fill="#edfff9" stroke="#00b894" stroke-width="1"/>
+              <text x="630" y="232" text-anchor="middle" font-size="10" font-weight="600" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif">INTERVENCIÓN</text>
+              <text x="350" y="270" text-anchor="middle" font-size="8" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif">Caso Kitty Genovese (1964): 38 testigos, ninguno intervino</text>
+            </g>
+          </svg>
+        </div>
+        <div class="diagram-caption">Figura 2. Modelo de decisión de intervención en emergencias de Latané y Darley (1968). Elaboración propia.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== LAYER 4: SOPORTE Y EXCLUSIÓN ===== -->
+<section class="layer-section" id="layer4" data-layer="4" style="background: linear-gradient(180deg, var(--green-bg) 0%, var(--bg) 100%);">
+  <div class="layer-inner">
+    <div class="layer-header">
+      <div class="layer-number" style="background: var(--green);">4</div>
+      <div>
+        <h2 style="color: var(--green);">Soporte Social y Exclusión</h2>
+        <div class="layer-desc">Redes de apoyo, familia como grupo primario y las dimensiones de la exclusión</div>
+      </div>
+    </div>
+    <div class="nodes-grid">
+
+      <!-- Node 20 -->
+      <div class="node-card layer-4" id="node20" data-node="20" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">20</div>
+          <div class="node-title">Familia como Grupo Primario <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Relaciones directas, cara a cara, con vínculos emocionales. Funciones: económica, afectiva, socializadora, asistencial.</div>
+        <div class="node-citation">(Sprott, 1958; Bronfenbrenner)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Sostiene</span>
+            <p>La familia es el primer y más importante grupo de referencia. Sprott (1958) la define por contacto cara a cara, vínculos emocionales profundos y patrones de interacción directa.</p>
+            <p><strong>4 funciones:</strong> económica (sustento), afectiva (amor y pertenencia), socializadora (transmisión de normas y valores), asistencial (cuidado en vulnerabilidad).</p>
+            <p>Bronfenbrenner ubica la familia en el <strong>microsistema</strong>, el contexto más inmediato del desarrollo humano, inserta en sistemas progresivamente más amplios.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node21" href="#node21">→ Apoyo social</a>
+              <a class="node-link-tag" data-target="node24" href="#node24">← Caplan</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 21 -->
+      <div class="node-card layer-4" id="node21" data-node="21" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">21</div>
+          <div class="node-title">Apoyo Social <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Conjunto de provisiones expresivas o instrumentales, percibidas o recibidas, de la comunidad, redes sociales y relaciones íntimas.</div>
+        <div class="node-citation">(Lin, 1986)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Protege</span>
+            <p><strong>4 dimensiones del apoyo:</strong></p>
+            <p>• <strong>Emocional:</strong> afecto, confianza, empatía.<br>
+            • <strong>Instrumental:</strong> ayuda material, servicios tangibles.<br>
+            • <strong>Empático:</strong> sentirse comprendido y validado.<br>
+            • <strong>Informativo:</strong> consejos, orientación, información útil.</p>
+            <p>El apoyo social funciona como <strong>amortiguador del estrés</strong> (buffering hypothesis) y como factor de protección directa sobre la salud física y mental.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node22" href="#node22">→ Cassel</a>
+              <a class="node-link-tag" data-target="node23" href="#node23">→ Cobb</a>
+              <a class="node-link-tag" data-target="node24" href="#node24">→ Caplan</a>
+              <a class="node-link-tag" data-target="node20" href="#node20">← Familia</a>
+              <a class="node-link-tag" data-target="node4" href="#node4">← Comunidad</a>
+              <a class="node-link-tag" data-target="node25" href="#node25">↔ Exclusión social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 22 -->
+      <div class="node-card layer-4" id="node22" data-node="22" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">22</div>
+          <div class="node-title">Cassel (1974) <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Apoyo social como información del entorno. El desequilibrio organismo-entorno produce enfermedad.</div>
+        <div class="node-citation">(Cassel, 1974)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Conceptualiza</span>
+            <p>Cassel fue pionero en vincular las <strong>condiciones ambientales nocivas</strong> (pobreza, marginalidad, contaminación) con desórdenes psicológicos. El apoyo social actúa como información que ayuda al organismo a mantener el equilibrio.</p>
+            <p>Cuando el entorno es adverso y no hay apoyo social que compense, se produce un <strong>desequilibrio organismo-entorno</strong> que lleva a la enfermedad tanto física como mental.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node21" href="#node21">← Apoyo social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 23 -->
+      <div class="node-card layer-4" id="node23" data-node="23" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">23</div>
+          <div class="node-title">Cobb (1976) <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Apoyo social como proceso informativo que transmite afectos positivos. Los grupos primarios son "protectores de salud".</div>
+        <div class="node-citation">(Cobb, 1976)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Protege</span>
+            <p>Para Cobb, el apoyo social es fundamentalmente <strong>información</strong> que lleva a la persona a creer que: (1) es cuidada y amada, (2) es estimada y valorada, (3) pertenece a una red de comunicación y obligaciones mutuas.</p>
+            <p>Los grupos primarios (familia, amigos cercanos) actúan como <strong>"protectores de salud"</strong>. Cobb argumentó que el soporte social comienza incluso desde el útero.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node21" href="#node21">← Apoyo social</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 24 -->
+      <div class="node-card layer-4" id="node24" data-node="24" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">24</div>
+          <div class="node-title">Caplan (1974) <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Distingue sistemas formales (institucionales) e informales (familia, amigos, autoayuda). Patrón duradero de vínculos.</div>
+        <div class="node-citation">(Caplan, 1974)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Organiza</span>
+            <p>Caplan clasificó el apoyo en dos sistemas:</p>
+            <p><strong>Sistemas formales:</strong> instituciones, servicios de salud, programas gubernamentales, escuelas, ONG.</p>
+            <p><strong>Sistemas informales:</strong> familia, amigos, vecinos, grupos de autoayuda, relaciones comunitarias.</p>
+            <p>Define el apoyo social como un <strong>"patrón duradero de vínculos continuos o intermitentes que mantienen la integridad física y psicológica"</strong> de la persona a lo largo del tiempo.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node21" href="#node21">← Apoyo social</a>
+              <a class="node-link-tag" data-target="node20" href="#node20">→ Familia</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 25 -->
+      <div class="node-card layer-4" id="node25" data-node="25" data-layer="4" onclick="toggleNode(this)">
+        <div class="node-header">
+          <div class="node-num">25</div>
+          <div class="node-title">Exclusión Social <span class="node-explored-badge">✓ explorado</span></div>
+          <div class="node-toggle">▼</div>
+        </div>
+        <div class="node-brief">Mobbing, bullying, exclusión estructural: producida de manera continuada, tolerada por el clima social, ejercida por los más integrados.</div>
+        <div class="node-citation">(Bautista, 2018; Morales et al., 2007)</div>
+        <div class="node-detail">
+          <div class="node-detail-inner">
+            <span class="node-verb">Margina</span>
+            <p>La exclusión social opera en múltiples niveles:</p>
+            <p><strong>Interpersonal:</strong> bullying (acoso escolar), mobbing (acoso laboral) — conductas repetitivas de hostigamiento.</p>
+            <p><strong>Estructural:</strong> pobreza, discriminación institucional, barreras de acceso a servicios.</p>
+            <p><strong>Características:</strong> se produce de manera continuada (no episódica), es tolerada por el clima social, y suele ser ejercida por quienes están más integrados en el grupo. El <strong>racismo</strong> es una forma extrema que puede escalar a <strong>violencia colectiva</strong>.</p>
+            <div class="node-links">
+              <a class="node-link-tag" data-target="node12" href="#node12">→ Agresión</a>
+              <a class="node-link-tag" data-target="node21" href="#node21">↔ Apoyo social (opuesto)</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DIAGRAM: Bronfenbrenner -->
+    <div class="diagram-section" style="max-width:900px; margin: 2.5rem auto; padding: 0;">
+      <div class="diagram-card" id="diagramBronf" data-diagram="bronfenbrenner">
+        <h3 style="color: var(--green);">Diagrama 1 · Modelo Ecológico de Bronfenbrenner</h3>
+        <p class="diagram-sub">Cuatro sistemas concéntricos del desarrollo humano — de lo inmediato a lo cultural</p>
+        <div class="diagram-svg-wrap">
+          <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="max-width: 450px;">
+            <circle class="anim-circle" cx="250" cy="250" r="230" fill="none" stroke="#00b894" stroke-width="2.5" opacity="0.3" style="animation-delay:0.8s"/>
+            <circle class="anim-circle" cx="250" cy="250" r="230" fill="#edfff9" opacity="0.15" style="animation-delay:0.8s"/>
+            <text class="anim-circle" x="250" y="35" text-anchor="middle" font-size="12" font-weight="700" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.9s">MACROSISTEMA</text>
+            <text class="anim-circle" x="250" y="50" text-anchor="middle" font-size="8.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.9s">Cultura, valores, leyes, ideología</text>
+            <circle class="anim-circle" cx="250" cy="250" r="175" fill="none" stroke="#00b894" stroke-width="2" opacity="0.4" style="animation-delay:0.6s"/>
+            <circle class="anim-circle" cx="250" cy="250" r="175" fill="#edfff9" opacity="0.2" style="animation-delay:0.6s"/>
+            <text class="anim-circle" x="250" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">EXOSISTEMA</text>
+            <text class="anim-circle" x="250" y="103" text-anchor="middle" font-size="8.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">Medios, políticas, trabajo de padres</text>
+            <circle class="anim-circle" cx="250" cy="250" r="120" fill="none" stroke="#00b894" stroke-width="2" opacity="0.5" style="animation-delay:0.4s"/>
+            <circle class="anim-circle" cx="250" cy="250" r="120" fill="#edfff9" opacity="0.25" style="animation-delay:0.4s"/>
+            <text class="anim-circle" x="250" y="143" text-anchor="middle" font-size="11" font-weight="700" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.5s">MESOSISTEMA</text>
+            <text class="anim-circle" x="250" y="158" text-anchor="middle" font-size="8.5" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.5s">Interacciones entre microsistemas</text>
+            <circle class="anim-circle" cx="250" cy="250" r="70" fill="none" stroke="#00b894" stroke-width="2.5" opacity="0.7" style="animation-delay:0.2s"/>
+            <circle class="anim-circle" cx="250" cy="250" r="70" fill="#edfff9" opacity="0.4" style="animation-delay:0.2s"/>
+            <text class="anim-circle" x="250" y="240" text-anchor="middle" font-size="12" font-weight="800" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.25s">MICROSISTEMA</text>
+            <text class="anim-circle" x="250" y="257" text-anchor="middle" font-size="9" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.25s">Familia, escuela,</text>
+            <text class="anim-circle" x="250" y="270" text-anchor="middle" font-size="9" fill="#00b894" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.25s">pares, iglesia</text>
+            <circle class="anim-circle" cx="250" cy="220" r="18" fill="#00b894" opacity="0.9" style="animation-delay:0s"/>
+            <text class="anim-circle" x="250" y="224" text-anchor="middle" font-size="9" font-weight="700" fill="white" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0s">Niño</text>
+            <text class="anim-circle" x="90" y="250" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.5s">Vecindario</text>
+            <text class="anim-circle" x="410" y="250" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.5s">Servicios</text>
+            <text class="anim-circle" x="250" y="410" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.5s">Amigos de la familia</text>
+            <text class="anim-circle" x="140" y="170" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.35s">Escuela</text>
+            <text class="anim-circle" x="360" y="170" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.35s">Hogar</text>
+            <text class="anim-circle" x="140" y="340" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.35s">Iglesia</text>
+            <text class="anim-circle" x="360" y="340" text-anchor="middle" font-size="8" fill="#636e72" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.35s">Pares</text>
+            <text class="anim-circle" x="60" y="155" text-anchor="middle" font-size="7.5" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">Medios de</text>
+            <text class="anim-circle" x="60" y="165" text-anchor="middle" font-size="7.5" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">comunicación</text>
+            <text class="anim-circle" x="440" y="155" text-anchor="middle" font-size="7.5" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">Políticas</text>
+            <text class="anim-circle" x="440" y="165" text-anchor="middle" font-size="7.5" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:0.7s">públicas</text>
+            <text class="anim-circle" x="250" y="490" text-anchor="middle" font-size="8" fill="#b2bec3" font-family="Plus Jakarta Sans, sans-serif" style="animation-delay:1s">Los sistemas se influyen mutuamente de forma bidireccional</text>
+          </svg>
+        </div>
+        <div class="diagram-caption">Figura 1. Modelo ecológico del desarrollo humano de Bronfenbrenner (1979). Elaboración propia.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== REFERENCES ===== -->
+<section class="references-section" id="referencias">
+  <h2>Referencias (APA 7.ª edición)</h2>
+  <ul class="ref-list">
+    <li>Aguilar, I. y Cruz, M. (2002). <em>Psicología social comunitaria: fundamentos y perspectivas</em>. México.</li>
+    <li>Bandura, A. (1973). <em>Aggression: A social learning analysis</em>. Prentice-Hall.</li>
+    <li>Barón, R. A. y Richardson, D. R. (1994). <em>Human aggression</em> (2.ª ed.). Plenum.</li>
+    <li>Batson, C. D. (1998). Altruism and prosocial behavior. En D. T. Gilbert, S. T. Fiske y G. Lindzey (Eds.), <em>The handbook of social psychology</em> (4.ª ed., Vol. 2, pp. 282–316). McGraw-Hill.</li>
+    <li>Bautista, N. P. (2018). <em>Psicología social: temas fundamentales</em>. Manual Moderno.</li>
+    <li>Bello, Z. y Casales, J. (2005). <em>Psicología social</em>. Félix Varela.</li>
+    <li>Berkowitz, L. (1989). Frustration-aggression hypothesis: Examination and reformulation. <em>Psychological Bulletin</em>, <em>106</em>(1), 59–73. https://doi.org/10.1037/0033-2909.106.1.59</li>
+    <li>Berkowitz, L. (1993). <em>Aggression: Its causes, consequences, and control</em>. McGraw-Hill.</li>
+    <li>Blanchard, R. J. y Blanchard, D. C. (1984). Affect and aggression: An animal model applied to human behavior. <em>Advances in the Study of Aggression</em>, <em>1</em>, 1–62.</li>
+    <li>Bronfenbrenner, U. (1979). <em>The ecology of human development</em>. Harvard University Press.</li>
+    <li>Buchanan, G. M. y Seligman, M. E. P. (1995). <em>Explanatory style</em>. Lawrence Erlbaum Associates.</li>
+    <li>Caplan, G. (1974). <em>Support systems and community mental health</em>. Behavioral Publications.</li>
+    <li>Cassel, J. (1974). Psychosocial processes and "stress": Theoretical formulation. <em>International Journal of Health Services</em>, <em>4</em>(3), 471–482.</li>
+    <li>Cobb, S. (1976). Social support as a moderator of life stress. <em>Psychosomatic Medicine</em>, <em>38</em>(5), 300–314.</li>
+    <li>Dollard, J., Doob, L. W., Miller, N. E., Mowrer, O. H. y Sears, R. R. (1939). <em>Frustration and aggression</em>. Yale University Press.</li>
+    <li>Durkheim, É. (1912). <em>Las formas elementales de la vida religiosa</em>. Akal.</li>
+    <li>Geen, R. G. (1978). Effects of attack and uncontrollable noise on aggression. <em>Journal of Research in Personality</em>, <em>12</em>(1), 15–29.</li>
+    <li>Heider, F. (1958). <em>The psychology of interpersonal relations</em>. Wiley.</li>
+    <li>Hogg, M. A. y Vaughan, G. M. (2010). <em>Psicología social</em> (5.ª ed.). Médica Panamericana.</li>
+    <li>Jones, E. E. y Davis, K. E. (1965). From acts to dispositions: The attribution process in person perception. <em>Advances in Experimental Social Psychology</em>, <em>2</em>, 219–266.</li>
+    <li>Kelley, H. H. (1973). The processes of causal attribution. <em>American Psychologist</em>, <em>28</em>(2), 107–128.</li>
+    <li>Latané, B. y Darley, J. M. (1968). Group inhibition of bystander intervention in emergencies. <em>Journal of Personality and Social Psychology</em>, <em>10</em>(3), 215–221.</li>
+    <li>Lin, N. (1986). Conceptualizing social support. En N. Lin, A. Dean y W. Ensel (Eds.), <em>Social support, life events, and depression</em> (pp. 17–30). Academic Press.</li>
+    <li>Lorenz, K. (1966). <em>On aggression</em>. Harcourt, Brace & World.</li>
+    <li>Montero, M. (2004). <em>Introducción a la psicología comunitaria: desarrollo, conceptos y procesos</em>. Paidós.</li>
+    <li>Morales, J. F., Moya, M. C., Gaviria, E. y Cuadrado, I. (2007). <em>Psicología social</em> (3.ª ed.). McGraw-Hill.</li>
+    <li>Moscovici, S. (1961). <em>La psychanalyse, son image et son public</em>. PUF.</li>
+    <li>Musitu, G., Herrero, J., Cantera, L. y Montenegro, M. (2015). <em>Introducción a la psicología comunitaria</em> (2.ª ed.). UCO Press.</li>
+    <li>Piliavin, J. A., Dovidio, J. F., Gaertner, S. L. y Clark, R. D., III. (1981). <em>Emergency intervention</em>. Academic Press.</li>
+    <li>Quetelet, A. (1833). <em>Recherches sur le penchant au crime</em>. Hayez.</li>
+    <li>Sanjuán, P. y Magallanes, A. (2007). Estilos explicativos y estrategias de afrontamiento. <em>Clínica y Salud</em>, <em>18</em>(1), 83–98.</li>
+    <li>Sprott, W. J. H. (1958). <em>Human groups</em>. Penguin Books.</li>
+    <li>Wilson, E. O. (1975). <em>Sociobiology: The new synthesis</em>. Harvard University Press.</li>
+  </ul>
+</section>
+
+<!-- ===== PROGRESS BAR ===== -->
+<div class="progress-bar-fixed" id="progressBar">
+  <span class="progress-text" id="progressText">0/25 explorados</span>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- ===== SCROLL TOP ===== -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ============================================================
+// DATA: All 25 nodes and 33 links for the force-directed graph
+// ============================================================
+const NODES_DATA = [
+  {id:1, label:"Psicología Social", short:"PS", layer:1, brief:"Investigación de la influencia social en pensamientos, sentimientos y conductas (Allport, 1954)"},
+  {id:2, label:"Fenómenos Sociopsicol.", short:"Fenómenos", layer:1, brief:"Condicionamiento, desarrollo y comunicación (Bello y Casales, 2005)"},
+  {id:3, label:"PS Comunitaria", short:"PSC", layer:1, brief:"Orientación a aspectos positivos y recursos de las comunidades (Montero, 2004)"},
+  {id:4, label:"Comunidad", short:"Comunidad", layer:1, brief:"Grupo social dinámico con intereses y problemas compartidos (Montero, 1998)"},
+  {id:5, label:"Rol del Psicólogo", short:"Rol Psic.", layer:1, brief:"Agente de cambio social y facilitador comunitario (Aguilar y Cruz, 2002)"},
+  {id:6, label:"Representaciones Sociales", short:"Rep. Soc.", layer:2, brief:"Conocimiento para elaborar comportamientos y comunicación (Moscovici, 1961)"},
+  {id:7, label:"Rep. Colectivas", short:"Rep. Col.", layer:2, brief:"Conocimiento erigido socialmente, trasciende lo individual (Durkheim, 1912)"},
+  {id:8, label:"Estilos Atribucionales", short:"Estilos Atr.", layer:2, brief:"Tendencia estable de atribución causal (Buchanan y Seligman, 1995)"},
+  {id:9, label:"Análisis Ingenuo (Heider)", short:"Heider", layer:2, brief:"Personas como 'científicos ingenuos' buscando causas internas o externas (Heider, 1958)"},
+  {id:10, label:"Inferencias (Jones y Davis)", short:"Jones-Davis", layer:2, brief:"Modelo centrado en causas internas: intención, efectos no comunes, deseabilidad (1965)"},
+  {id:11, label:"Covarianza (Kelley)", short:"Kelley", layer:2, brief:"Consenso, distintividad y consistencia para atribuir causalidad (Kelley, 1973)"},
+  {id:12, label:"Agresión", short:"Agresión", layer:3, brief:"Conducta dirigida a dañar a otro ser vivo (Barón y Richardson, 1994)"},
+  {id:13, label:"Teorías Innatas", short:"Innatas", layer:3, brief:"Agresión como disposición biológica: Freud, Lorenz, Wilson, Blanchard"},
+  {id:14, label:"Aprendizaje Social", short:"Bandura", layer:3, brief:"Agresión aprendida por observación e imitación de modelos (Bandura, 1973)"},
+  {id:15, label:"Frustración-Agresión", short:"Frustración", layer:3, brief:"Frustración genera agresión si el sujeto ha aprendido a responder así (Dollard/Berkowitz)"},
+  {id:16, label:"Factores Ambientales", short:"F. Ambient.", layer:3, brief:"Ruido, temperatura, hacinamiento y dolor facilitan la agresión"},
+  {id:17, label:"Conducta Prosocial", short:"Prosocial", layer:3, brief:"Acciones que benefician a otros, fundamentales para la sociedad (Bautista, 2018)"},
+  {id:18, label:"Efecto Espectador", short:"Espectador", layer:3, brief:"A más personas, menor probabilidad de ayuda. Difusión de responsabilidad (Latané y Darley, 1968)"},
+  {id:19, label:"Coste-Recompensa", short:"Coste-Rec.", layer:3, brief:"Decisión de ayudar depende de empatía, excitación y costos (Piliavin et al., 1981)"},
+  {id:20, label:"Familia", short:"Familia", layer:4, brief:"Grupo primario con funciones económica, afectiva, socializadora, asistencial (Sprott/Bronfenbrenner)"},
+  {id:21, label:"Apoyo Social", short:"Apoyo Soc.", layer:4, brief:"Provisiones expresivas o instrumentales de la comunidad y redes (Lin, 1986)"},
+  {id:22, label:"Cassel (1974)", short:"Cassel", layer:4, brief:"Apoyo social como información del entorno, equilibrio organismo-entorno"},
+  {id:23, label:"Cobb (1976)", short:"Cobb", layer:4, brief:"Apoyo como proceso informativo, grupos primarios protegen la salud"},
+  {id:24, label:"Caplan (1974)", short:"Caplan", layer:4, brief:"Sistemas formales e informales de apoyo, patrón duradero de vínculos"},
+  {id:25, label:"Exclusión Social", short:"Exclusión", layer:4, brief:"Mobbing, bullying, racismo — producida de manera continuada (Bautista, 2018)"}
+];
+
+// 33 links — type: 'hierarchical' or 'cross'
+const LINKS_DATA = [
+  {source:1, target:3, type:'hierarchical', label:'da origen a'},
+  {source:1, target:6, type:'hierarchical', label:'estudia'},
+  {source:3, target:4, type:'hierarchical', label:'se desarrolla en'},
+  {source:3, target:5, type:'hierarchical', label:'define'},
+  {source:7, target:6, type:'hierarchical', label:'antecede a'},
+  {source:8, target:9, type:'hierarchical', label:'se fundamenta en'},
+  {source:9, target:10, type:'hierarchical', label:'es base de'},
+  {source:9, target:11, type:'hierarchical', label:'es base de'},
+  {source:12, target:13, type:'hierarchical', label:'se explica por'},
+  {source:12, target:14, type:'hierarchical', label:'se explica por'},
+  {source:12, target:15, type:'hierarchical', label:'se explica por'},
+  {source:12, target:16, type:'hierarchical', label:'se asocia a'},
+  {source:17, target:18, type:'hierarchical', label:'se modela por'},
+  {source:17, target:19, type:'hierarchical', label:'se modela por'},
+  {source:21, target:22, type:'hierarchical', label:'se conceptualiza'},
+  {source:21, target:23, type:'hierarchical', label:'se conceptualiza'},
+  {source:21, target:24, type:'hierarchical', label:'se organiza según'},
+  {source:20, target:21, type:'hierarchical', label:'es fuente de'},
+  {source:2, target:1, type:'hierarchical', label:'define objeto de'},
+  {source:17, target:12, type:'cross', label:'se contrapone a'},
+  {source:4, target:21, type:'cross', label:'genera y sostiene'},
+  {source:6, target:12, type:'cross', label:'modula'},
+  {source:8, target:12, type:'cross', label:'modula'},
+  {source:5, target:17, type:'cross', label:'promueve'},
+  {source:14, target:17, type:'cross', label:'explica también'},
+  {source:25, target:12, type:'cross', label:'genera'},
+  {source:25, target:21, type:'cross', label:'es opuesto a'},
+  {source:15, target:21, type:'cross', label:'se modera por'},
+  {source:18, target:4, type:'cross', label:'influye en'},
+  {source:6, target:4, type:'cross', label:'construyen identidad'},
+  {source:24, target:20, type:'cross', label:'incluye a'},
+  {source:2, target:6, type:'cross', label:'se manifiesta como'},
+  {source:9, target:16, type:'cross', label:'conecta con'}
+];
+
+const LAYER_COLORS = { 1: '#6c5ce7', 2: '#0984e3', 3: '#d63031', 4: '#00b894' };
+const LAYER_NAMES = { 1: 'Fundamentos', 2: 'Cognición Social', 3: 'Conducta', 4: 'Soporte / Exclusión' };
+
+// ============================================================
+// PROGRESS TRACKER
+// ============================================================
+let exploredNodes = new Set(JSON.parse(sessionStorage.getItem('psMapExplored') || '[]'));
+
+function updateProgress() {
+  const count = exploredNodes.size;
+  const total = 25;
+  document.getElementById('progressText').textContent = `${count}/${total} explorados`;
+  document.getElementById('progressFill').style.width = `${(count/total)*100}%`;
+  // Update explored badges
+  exploredNodes.forEach(id => {
+    const card = document.getElementById('node' + id);
+    if (card) card.classList.add('explored');
+  });
+  sessionStorage.setItem('psMapExplored', JSON.stringify([...exploredNodes]));
+}
+
+// ============================================================
+// NODE TOGGLE
+// ============================================================
+function toggleNode(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  card.classList.toggle('expanded');
+
+  if (!wasExpanded) {
+    const nodeId = parseInt(card.dataset.node);
+    if (nodeId) {
+      exploredNodes.add(nodeId);
+      updateProgress();
+      // Pulse related nodes in network
+      highlightNetworkNode(nodeId);
+    }
+  }
+}
+
+// ============================================================
+// FORCE-DIRECTED NETWORK GRAPH (D3.js)
+// ============================================================
+let simulation, svgNet, nodeElements, linkElements, dotElements;
+let activeFilter = null;
+
+function buildNetwork() {
+  const container = document.getElementById('networkContainer');
+  const legend = container.querySelector('.network-legend');
+  const width = container.clientWidth;
+  const height = Math.min(560, Math.max(400, width * 0.5));
+
+  // Remove existing svg if any
+  d3.select('#networkContainer svg').remove();
+
+  const svg = d3.select('#networkContainer')
+    .insert('svg', '.network-legend')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('id', 'networkCanvas');
+
+  svgNet = svg;
+
+  // Defs for flowing dots
+  const defs = svg.append('defs');
+  // Arrowhead markers
+  Object.entries(LAYER_COLORS).forEach(([layer, color]) => {
+    defs.append('marker')
+      .attr('id', 'arrowNet' + layer)
+      .attr('viewBox', '0 0 10 6')
+      .attr('refX', 20).attr('refY', 3)
+      .attr('markerWidth', 8).attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('polygon')
+      .attr('points', '0 0, 10 3, 0 6')
+      .attr('fill', color)
+      .attr('opacity', 0.6);
+  });
+  defs.append('marker')
+    .attr('id', 'arrowNetGray')
+    .attr('viewBox', '0 0 10 6')
+    .attr('refX', 20).attr('refY', 3)
+    .attr('markerWidth', 8).attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('polygon')
+    .attr('points', '0 0, 10 3, 0 6')
+    .attr('fill', '#636e72')
+    .attr('opacity', 0.5);
+
+  const g = svg.append('g');
+
+  // Zoom
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3])
+    .on('zoom', (event) => g.attr('transform', event.transform));
+  svg.call(zoom);
+
+  // Prepare data copies
+  const nodes = NODES_DATA.map(d => ({...d}));
+  const links = LINKS_DATA.map(d => ({
+    source: nodes.find(n => n.id === d.source),
+    target: nodes.find(n => n.id === d.target),
+    type: d.type, label: d.label
+  }));
+
+  // Links
+  linkElements = g.selectAll('.net-link')
+    .data(links).enter().append('line')
+    .attr('class', 'net-link')
+    .attr('stroke', d => d.type === 'cross' ? '#636e72' : LAYER_COLORS[d.source.layer])
+    .attr('stroke-width', d => d.type === 'cross' ? 1 : 1.8)
+    .attr('stroke-dasharray', d => d.type === 'cross' ? '5,3' : 'none')
+    .attr('opacity', d => d.type === 'cross' ? 0.25 : 0.45)
+    .attr('marker-end', d => d.type === 'cross' ? 'url(#arrowNetGray)' : `url(#arrowNet${d.source.layer})`);
+
+  // Flowing dots on links
+  dotElements = g.selectAll('.net-dot')
+    .data(links.filter(d => d.type === 'hierarchical')).enter().append('circle')
+    .attr('class', 'net-dot')
+    .attr('r', 2)
+    .attr('fill', d => LAYER_COLORS[d.source.layer])
+    .attr('opacity', 0.7);
+
+  // Nodes
+  nodeElements = g.selectAll('.net-node')
+    .data(nodes).enter().append('g')
+    .attr('class', 'net-node')
+    .style('cursor', 'pointer')
+    .call(d3.drag()
+      .on('start', dragStart)
+      .on('drag', dragging)
+      .on('end', dragEnd));
+
+  nodeElements.append('circle')
+    .attr('r', d => d.id === 1 || d.id === 12 || d.id === 17 || d.id === 21 ? 16 : 12)
+    .attr('fill', d => LAYER_COLORS[d.layer])
+    .attr('stroke', 'white')
+    .attr('stroke-width', 2)
+    .attr('opacity', 0.9);
+
+  nodeElements.append('text')
+    .text(d => d.id)
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .attr('font-size', '8px')
+    .attr('font-weight', '700')
+    .attr('fill', 'white')
+    .attr('font-family', 'Plus Jakarta Sans, sans-serif')
+    .style('pointer-events', 'none');
+
+  nodeElements.append('text')
+    .text(d => d.short)
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => (d.id === 1 || d.id === 12 || d.id === 17 || d.id === 21 ? 28 : 24))
+    .attr('font-size', '7.5px')
+    .attr('font-weight', '600')
+    .attr('fill', 'currentColor')
+    .attr('font-family', 'Plus Jakarta Sans, sans-serif')
+    .style('pointer-events', 'none');
+
+  // Tooltip and click
+  const tooltip = document.getElementById('netTooltip');
+  nodeElements
+    .on('mouseover', function(event, d) {
+      tooltip.innerHTML = `<strong>${d.id}. ${d.label}</strong><br>${d.brief}`;
+      tooltip.style.opacity = '1';
+      const rect = container.getBoundingClientRect();
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+      d3.select(this).select('circle').transition().duration(200).attr('r', d.id === 1 || d.id === 12 || d.id === 17 || d.id === 21 ? 20 : 16);
+    })
+    .on('mousemove', function(event) {
+      const rect = container.getBoundingClientRect();
+      tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+      tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+    })
+    .on('mouseout', function(event, d) {
+      tooltip.style.opacity = '0';
+      d3.select(this).select('circle').transition().duration(200).attr('r', d.id === 1 || d.id === 12 || d.id === 17 || d.id === 21 ? 16 : 12);
+    })
+    .on('click', function(event, d) {
+      event.stopPropagation();
+      // Highlight connections
+      highlightConnections(d.id);
+      // Scroll to card
+      const card = document.getElementById('node' + d.id);
+      if (card) {
+        card.classList.add('expanded');
+        exploredNodes.add(d.id);
+        updateProgress();
+        const offset = document.querySelector('.nav')?.offsetHeight || 0;
+        const top = card.getBoundingClientRect().top + window.pageYOffset - offset - 20;
+        window.scrollTo({ top, behavior: 'smooth' });
+        card.classList.add('highlight-pulse');
+        setTimeout(() => card.classList.remove('highlight-pulse'), 1500);
+      }
+    });
+
+  // Simulation
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'cross' ? 140 : 80).strength(d => d.type === 'cross' ? 0.15 : 0.5))
+    .force('charge', d3.forceManyBody().strength(-250))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('x', d3.forceX(d => {
+      const layerX = { 1: width*0.15, 2: width*0.38, 3: width*0.62, 4: width*0.85 };
+      return layerX[d.layer] || width/2;
+    }).strength(0.15))
+    .force('y', d3.forceY(height / 2).strength(0.05))
+    .force('collision', d3.forceCollide(22));
+
+  let dotPhase = 0;
+  simulation.on('tick', () => {
+    linkElements
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+
+    nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
+
+    // Animate flowing dots
+    dotPhase = (dotPhase + 0.008) % 1;
+    dotElements.each(function(d, i) {
+      const t = (dotPhase + i * 0.07) % 1;
+      const x = d.source.x + (d.target.x - d.source.x) * t;
+      const y = d.source.y + (d.target.y - d.source.y) * t;
+      d3.select(this).attr('cx', x).attr('cy', y);
+    });
+  });
+
+  // Build mobile list
+  const mobileList = document.getElementById('mobileList');
+  mobileList.innerHTML = NODES_DATA.map(n =>
+    `<div class="network-mobile-item" onclick="scrollToNode(${n.id})">
+      <div class="network-mobile-dot" style="background:${LAYER_COLORS[n.layer]}"></div>
+      ${n.id}. ${n.short}
+    </div>`
+  ).join('');
+}
+
+function scrollToNode(id) {
+  const card = document.getElementById('node' + id);
+  if (card) {
+    card.classList.add('expanded');
+    exploredNodes.add(id);
+    updateProgress();
+    const offset = document.querySelector('.nav')?.offsetHeight || 0;
+    const top = card.getBoundingClientRect().top + window.pageYOffset - offset - 20;
+    window.scrollTo({ top, behavior: 'smooth' });
+    card.classList.add('highlight-pulse');
+    setTimeout(() => card.classList.remove('highlight-pulse'), 1500);
+  }
+}
+
+function highlightConnections(nodeId) {
+  if (!linkElements) return;
+  // Reset
+  linkElements.transition().duration(300)
+    .attr('opacity', d => {
+      if (d.source.id === nodeId || d.target.id === nodeId) return 0.8;
+      return d.type === 'cross' ? 0.08 : 0.12;
+    })
+    .attr('stroke-width', d => {
+      if (d.source.id === nodeId || d.target.id === nodeId) return 3;
+      return d.type === 'cross' ? 0.5 : 1;
+    });
+  nodeElements.select('circle').transition().duration(300)
+    .attr('opacity', d => {
+      if (d.id === nodeId) return 1;
+      const connected = LINKS_DATA.some(l =>
+        (l.source === nodeId && l.target === d.id) || (l.target === nodeId && l.source === d.id)
+      );
+      return connected ? 0.9 : 0.2;
+    });
+
+  // Reset after 3s
+  setTimeout(() => {
+    linkElements.transition().duration(500)
+      .attr('opacity', d => d.type === 'cross' ? 0.25 : 0.45)
+      .attr('stroke-width', d => d.type === 'cross' ? 1 : 1.8);
+    nodeElements.select('circle').transition().duration(500).attr('opacity', 0.9);
+  }, 3000);
+}
+
+function highlightNetworkNode(nodeId) {
+  if (!nodeElements) return;
+  nodeElements.select('circle')
+    .filter(d => d.id === nodeId)
+    .transition().duration(200).attr('r', 22)
+    .transition().duration(200).attr('r', 16)
+    .transition().duration(200).attr('r', 20)
+    .transition().duration(300).attr('r', d => d.id === 1 || d.id === 12 || d.id === 17 || d.id === 21 ? 16 : 12);
+  highlightConnections(nodeId);
+}
+
+function dragStart(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x; d.fy = d.y;
+}
+function dragging(event, d) { d.fx = event.x; d.fy = event.y; }
+function dragEnd(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null; d.fy = null;
+}
+
+// ============================================================
+// LAYER FILTERING
+// ============================================================
+document.querySelectorAll('.nav a[data-filter]').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    const layer = this.dataset.filter;
+    if (activeFilter === layer) {
+      clearFilter();
+      return;
+    }
+    activeFilter = layer;
+    document.getElementById('showAllBtn').style.display = 'inline-block';
+
+    // Filter cards
+    document.querySelectorAll('.node-card').forEach(card => {
+      card.classList.toggle('layer-hidden', card.dataset.layer !== layer);
+    });
+    // Filter sections (show all but dim non-matching)
+    document.querySelectorAll('.layer-section').forEach(sec => {
+      sec.classList.toggle('layer-hidden', sec.dataset.layer !== layer);
+    });
+
+    // Filter network nodes
+    if (nodeElements) {
+      nodeElements.select('circle').transition().duration(300)
+        .attr('opacity', d => d.layer === parseInt(layer) ? 0.95 : 0.1);
+      linkElements.transition().duration(300)
+        .attr('opacity', d => {
+          const sl = d.source.layer || NODES_DATA.find(n => n.id === d.source)?.layer;
+          const tl = d.target.layer || NODES_DATA.find(n => n.id === d.target)?.layer;
+          return (sl === parseInt(layer) || tl === parseInt(layer)) ? 0.5 : 0.05;
+        });
+    }
+  });
+});
+
+document.getElementById('showAllBtn').addEventListener('click', clearFilter);
+
+function clearFilter() {
+  activeFilter = null;
+  document.getElementById('showAllBtn').style.display = 'none';
+  document.querySelectorAll('.node-card').forEach(c => c.classList.remove('layer-hidden'));
+  document.querySelectorAll('.layer-section').forEach(s => s.classList.remove('layer-hidden'));
+  if (nodeElements) {
+    nodeElements.select('circle').transition().duration(300).attr('opacity', 0.9);
+    linkElements.transition().duration(300).attr('opacity', d => d.type === 'cross' ? 0.25 : 0.45);
+  }
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) {
+    document.querySelectorAll('.node-card').forEach(c => c.classList.remove('searched-out'));
+    return;
+  }
+  document.querySelectorAll('.node-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.classList.toggle('searched-out', !text.includes(q));
+  });
+});
+
+// ============================================================
+// DARK MODE
+// ============================================================
+const darkToggle = document.getElementById('darkToggle');
+let darkMode = localStorage.getItem('psMapDark') === 'true';
+if (darkMode) document.documentElement.setAttribute('data-theme', 'dark');
+updateDarkBtn();
+
+darkToggle.addEventListener('click', () => {
+  darkMode = !darkMode;
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
+  localStorage.setItem('psMapDark', darkMode);
+  updateDarkBtn();
+});
+
+function updateDarkBtn() {
+  darkToggle.textContent = darkMode ? '☀️' : '🌙';
+  darkToggle.title = darkMode ? 'Modo claro' : 'Modo oscuro';
+}
+
+// ============================================================
+// PRINT / PDF
+// ============================================================
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+window.addEventListener('beforeprint', () => {
+  document.querySelectorAll('.node-card').forEach(c => c.classList.add('expanded'));
+});
+
+// ============================================================
+// SCROLL TO TOP BUTTON
+// ============================================================
+const scrollBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', () => {
+  scrollBtn.classList.toggle('visible', window.scrollY > 400);
+});
+
+// ============================================================
+// NAV ACTIVE HIGHLIGHTING
+// ============================================================
+const sections = document.querySelectorAll('.layer-section, .network-section, .references-section');
+const navLinks = document.querySelectorAll('.nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const id = entry.target.id;
+      const link = document.querySelector(`.nav a[href="#${id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ============================================================
+// NODE LINK TAGS — Navigate and expand with connection highlight
+// ============================================================
+document.querySelectorAll('.node-link-tag').forEach(tag => {
+  tag.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const targetId = this.dataset.target;
+    const href = this.getAttribute('href');
+    const target = document.querySelector(href);
+    if (target) {
+      target.classList.add('expanded');
+      const nodeNum = parseInt(targetId?.replace('node', ''));
+      if (nodeNum) {
+        exploredNodes.add(nodeNum);
+        updateProgress();
+        highlightNetworkNode(nodeNum);
+      }
+      const offset = document.querySelector('.nav')?.offsetHeight || 0;
+      const top = target.getBoundingClientRect().top + window.pageYOffset - offset - 20;
+      window.scrollTo({ top, behavior: 'smooth' });
+      target.classList.add('highlight-pulse');
+      setTimeout(() => target.classList.remove('highlight-pulse'), 1500);
+    }
+  });
+});
+
+// ============================================================
+// SMOOTH SCROLL for all anchor links
+// ============================================================
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  if (a.classList.contains('node-link-tag')) return; // handled above
+  a.addEventListener('click', function(e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      const offset = document.querySelector('.nav')?.offsetHeight || 0;
+      const top = target.getBoundingClientRect().top + window.pageYOffset - offset - 16;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  });
+});
+
+// ============================================================
+// ANIMATED DIAGRAMS ON SCROLL
+// ============================================================
+const diagramObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-in');
+      diagramObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.diagram-card').forEach(d => diagramObserver.observe(d));
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  buildNetwork();
+  updateProgress();
+});
+window.addEventListener('resize', () => {
+  // Rebuild network on significant resize
+  clearTimeout(window._netResize);
+  window._netResize = setTimeout(buildNetwork, 300);
+});
+</script>
+</body>
+</html>
